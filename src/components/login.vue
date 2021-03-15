@@ -73,10 +73,11 @@ export default {
   },
   methods: {
     resetLoginForm () {
-      this.$refs.loginFormRef.resetFields()
+      this.$refs.loginFormRef.resetFields() // 重置函数
     },
-    login () {
+    login () { // 表单预验证
       this.$refs.loginFormRef.validate((valid) => {
+        console.log(valid)
         if (!valid) return
         this.$http.post('login', this.loginForm).then((res) => {
           console.log(res)
@@ -87,6 +88,7 @@ export default {
         })
       })
     }
+
   }
 }
 </script>
