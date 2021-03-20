@@ -5,7 +5,7 @@ import './plugins/element.js'
 import './assets/css/global.css'
 import axios from 'axios'
 Vue.config.productionTip = false
-axios.defaults.baseURL = 'http://121.4.224.118:8888/api/private/v1'
+axios.defaults.baseURL = 'http://121.4.224.118:3000'
 // 请求拦截器 添加token
 axios.interceptors.request.use(config => {
   console.log(config)

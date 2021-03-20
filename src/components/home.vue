@@ -27,11 +27,19 @@
           :router="true"
           :default-active="activePath"
         >
+          <!-- <el-submenu
+            index='999'
+            key='999'
+          >
+            <template slot="title">
+              <span>首页</span>
+            </template> -->
           <!-- 一级菜单 -->
-          <el-submenu
-            :index="item.id + ''"
+          <el-menu-item
+            :index="'/' + item.path"
             v-for="item in menulist"
             :key="item.id"
+            @click="saveNavStatus('/' + item.path)"
           >
             <template slot="title">
               <!-- 图标 -->
@@ -39,19 +47,18 @@
               <span>{{ item.authName }}</span>
             </template>
             <!-- 二级菜单 -->
-            <el-menu-item
+            <!-- <el-menu-item
               :index="'/' + subItem.path"
               v-for="subItem in item.children"
               :key="subItem.id"
               @click="saveNavStatus('/' + subItem.path)"
-
             >
               <template slot="">
                 <i class="el-icon-menu"></i>
                 <span>{{ subItem.authName }}</span>
               </template>
-            </el-menu-item>
-          </el-submenu>
+            </el-menu-item> -->
+          </el-menu-item>
         </el-menu>
       </el-aside>
 
@@ -66,7 +73,21 @@
 export default {
   data () {
     return {
-      menulist: [],
+      menulist: [
+        {
+          id: 125,
+          authName: '首页',
+          path: 'welcome',
+          order: 1
+        },
+        {
+          id: 103,
+          authName: '订单管理',
+          path: 'users',
+          order: 2
+        }
+
+      ],
       isCollapse: false,
       iconsObj: {
         125: 'el-icon-user',
@@ -78,7 +99,7 @@ export default {
     }
   },
   created () {
-    this.getMenuList()
+    // this.getMenuList()
     this.activePath = window.sessionStorage.getItem('activePath')
   },
   methods: {
@@ -86,12 +107,12 @@ export default {
       window.sessionStorage.clear()
       this.$router.push('/login')
     },
-    async getMenuList () {
-      const { data: res } = await this.$http.get('menus')
-      if (res.meta.status !== 200) return this.$message.error(res.meta.msg)
-      this.menulist = res.data
-      console.log(this.menulist)
-    },
+    // async getMenuList () {
+    //   const { data: res } = await this.$http.get('menus')
+    //   if (res.meta.status !== 200) return this.$message.error(res.meta.msg)
+    //   this.menulist = res.data
+    //   console.log(this.menulist)
+    // },
     // 菜单折叠展开
     togleCollapse () {
       this.isCollapse = !this.isCollapse
@@ -143,7 +164,7 @@ export default {
 }
 
 .toggle-button {
-  background-color: #4A5064;
+  background-color: #4a5064;
   font-size: 10px;
   line-height: 24px;
   color: #fff;
