@@ -14,44 +14,74 @@
         </el-col>
       </el-row>
       <!-- 用户列表区 -->
-      <el-table stripe :data="userList" border>
+      <el-table stripe :data="userList" border style="font-size: 15px" v-loading="loading"
+        >>
         <el-table-column type="index"> </el-table-column>
-        <el-table-column prop="username" label="姓名"> </el-table-column>
-        <el-table-column prop="email" label="邮箱"> </el-table-column>
-        <el-table-column prop="mobile" label="电话"> </el-table-column>
-        <el-table-column prop="role_name" label="角色"> </el-table-column>
-        <el-table-column label="状态">
-          <!-- 作用域插槽 -->
+        <el-table-column prop="name" label="下单人" align="center" width="100px">
+        </el-table-column>
+        <el-table-column
+          prop="create_time"
+          label="下单时间"
+          :formatter="dateFormat"
+          align="center"
+        >
+        </el-table-column>
+        <el-table-column prop="price" label="价格" align="center" width="80px">
+        </el-table-column>
+        <el-table-column prop="type" label="类型" align="center" width="80px">
+        </el-table-column>
+        <!-- <el-table-column prop="has" label="是否付钱" :formatter="sFormat" align="center"> </el-table-column> -->
+        <el-table-column
+          prop="end_time"
+          label="截至日期"
+          :formatter="dateFormat"
+          align="center"
+        >
+        </el-table-column>
+        <el-table-column
+          label="备注"
+          prop="status"
+          :formatter="sFormat"
+          align="center"
+        >
           <template slot-scope="scope">
-            <el-switch v-model="scope.row.mg_state"> </el-switch>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作">
-          <template>
-            <el-button type="primary" icon="el-icon-edit" size="mini">
-            </el-button>
-            <el-button
-              type="danger"
-              icon="el-icon-delete"
-              size="mini"
-            ></el-button>
-            <el-tooltip
-              class="item"
+            <el-tag v-if="scope.row.has==0"
+              type='warning'
               effect="dark"
-              content="分配权限"
-              placement="top"
-              :enterable="false"
+              closable
+              @close="handleClose('has',1)"
             >
-              <el-button
-                type="warning"
-                icon="el-icon-setting"
-                size="mini"
-              ></el-button>
-            </el-tooltip>
+              {{ scope.row.status ? "已完成" : "未完成" }}
+            </el-tag>
+            <el-tag v-if="scope.row.has==0"
+              type='warning'
+              effect="dark"
+              closable
+              @close="handleClose('status',1)"
+            >
+              {{ scope.row.status ? "已付款" : "未付款" }}
+            </el-tag>
+              <!-- <el-tag
+              :type="scope.row.status==3? 'info' : 'danger'"
+              effect="dark"
+              @click="handleClose('status',3)"
+            >
+              {{ scope.row.status ? "订单已取消" : "取消订单" }}
+            </el-tag> -->
+            <el-button  type="danger" size="small" :disabled="scope.row.status==3" @click="handleClose('status',3)"> {{scope.row.status?'订单已取消':'取消订单'}}</el-button>
           </template>
         </el-table-column>
-        <!-- <el-table-column prop="username" label="地址"> </el-table-column> -->
       </el-table>
+         <!-- 分页区域 -->
+      <el-pagination
+      background
+        @current-change="handleCurrentChange"
+        :current-page="queryInfo.pageNum"
+        :page-size="queryInfo.pageSize"
+        hide-on-single-page
+        layout="total, prev, pager, next"
+        :total="total"
+      ></el-pagination>
     </el-card>
     <el-dialog
       title="添加用户"
@@ -73,17 +103,18 @@
           <el-input v-model="Form.price"></el-input>
         </el-form-item>
         <el-form-item label="付钱" prop="has">
-          <el-radio v-model="Form.has" label=1>是</el-radio>
-          <el-radio v-model="Form.has" label=0>否</el-radio>
+          <el-radio v-model="Form.has" label="1">是</el-radio>
+          <el-radio v-model="Form.has" label="0">否</el-radio>
         </el-form-item>
         <el-form-item label="截至日期" prop="value1">
-             <el-date-picker
-      v-model="Form.value1"
-      type="date"
-      placeholder="选择日期"
+          <el-date-picker
+            v-model="Form.value1"
+            type="date"
+            placeholder="选择日期"
             format="yyyy 年 MM 月 dd 日"
-      value-format="yyyy-MM-dd">
-    </el-date-picker>
+            value-format="yyyy-MM-dd"
+          >
+          </el-date-picker>
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
@@ -91,19 +122,7 @@
         <el-button type="primary" @click="addUser">确 定</el-button>
       </span>
     </el-dialog>
-    <!-- <el-button type="text" @click="dialogVisible = true">点击打开 Dialog</el-button>
 
-<el-dialog
-  title="提示"
-  :visible.sync="dialogVisible"
-  width="30%"
-  :before-close="handleClose">
-  <span>这是一段信息</span>
-  <span slot="footer" class="dialog-footer">
-    <el-button @click="dialogVisible = false">取 消</el-button>
-    <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
-  </span>
-</el-dialog> -->
   </div>
 </template>
 <script>
@@ -112,54 +131,105 @@ export default {
     return {
       queryInfo: {
         query: '',
-        pagenum: 1,
-        pagesize: 2
+        pageNum: 1,
+        pageSize: 10
       },
       userList: [],
       total: 0,
+      loading: false,
       addDialogVisible: false,
       Form: {
         username: '',
         radio: '调试',
-        has: 0,
+        has: '0',
         value1: '',
         price: 10,
         timestamp: new Date(),
         status: 0
       }
-
     }
   },
   created () {
-    // this.getUserList()
+    this.getUserList()
   },
   methods: {
+    dateFormat (row, column, cellValue, index) {
+      console.log(cellValue)
+      const date = new Date(cellValue)
+      return (
+        date.getFullYear() +
+        '-' +
+        (date.getMonth() + 1) +
+        '-' +
+        date.getDate() +
+        ' ' +
+        date.getHours() +
+        ':' +
+        date.getMinutes() +
+        ':' +
+        date.getSeconds()
+      )
+    },
+    sFormat (cellValue) {
+      return cellValue ? '否' : '是'
+    },
     addDialogClosed () {
       this.$refs.addUserFormRef.resetFields()
     },
     async getUserList () {
-      const { data: res } = await this.$http.post('add', {
+      this.loading = true
+      const { data: res } = await this.$http.get('data', {
         params: this.queryInfo
       })
       console.log(res)
       if (res.meta.status !== 200) {
         return this.$message.error('用户列表获取失败')
       }
-      this.userList = res.data.users
+      this.userList = res.data.orders.data
       this.total = res.data.total
+      this.loading = false
+    },
+    handleClose (type, s) {
+      this.$confirm('此操作将永久删除该文件, 是否继续?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+        center: true
+      }).then(() => {
+        this.$message({
+          type: 'success',
+          message: '删除成功!'
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '已取消删除'
+        })
+      })
+    },
+    handleCurrentChange (newSize) {
+      this.queryInfo.pageNum = newSize
+      this.getUserList()
     },
     async addUser () {
       const { data: res } = await this.$http.post('add', this.Form)
-      if (res.meta.status !== 201) {
+      if (res.meta.status !== 200) {
         this.$message.error('添加用户失败！')
       }
       this.$message.success('添加用户成功！')
       // 隐藏添加用户对话框
       this.addDialogVisible = false
-      // this.getUserList()
+      this.getUserList()
     }
   }
 }
 </script>
 <style lang="less" scoped>
+.el-tag
+{
+  margin-left: 10px;
+}
+.el-button{
+  margin-left: 10px;
+}
 </style>
