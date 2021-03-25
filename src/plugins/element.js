@@ -5,7 +5,7 @@ import {
   Header, Aside, Main, Menu, Submenu,
   MenuItemGroup, MenuItem, Table, TableColumn,
   Breadcrumb, BreadcrumbItem, Card, Row, Col, Switch, Tooltip,
-  Avatar, Dialog, Radio, DatePicker, Tag, MessageBox, Pagination, Loading
+  Avatar, Dialog, Radio, DatePicker, Tag, MessageBox, Pagination, Loading, Badge
 } from 'element-ui'
 
 Vue.use(Button)
@@ -36,6 +36,7 @@ Vue.use(DatePicker)
 Vue.use(Tag)
 Vue.use(Pagination)
 Vue.use(Loading)
+Vue.use(Badge)
 Vue.component(MessageBox.name, MessageBox)
 Vue.prototype.$message = Message
 Vue.prototype.$confirm = MessageBox.confirm

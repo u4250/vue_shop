@@ -14,10 +14,20 @@
         </el-col>
       </el-row>
       <!-- 用户列表区 -->
-      <el-table stripe :data="userList" border style="font-size: 15px" v-loading="loading"
+      <el-table
+        stripe
+        :data="userList"
+        border
+        style="font-size: 15px"
+        v-loading="loading"
         >>
         <el-table-column type="index"> </el-table-column>
-        <el-table-column prop="name" label="下单人" align="center" width="100px">
+        <el-table-column
+          prop="name"
+          label="下单人"
+          align="center"
+          width="100px"
+        >
         </el-table-column>
         <el-table-column
           prop="create_time"
@@ -45,36 +55,37 @@
           align="center"
         >
           <template slot-scope="scope">
-            <el-tag v-if="scope.row.has==0"
-              type='warning'
+            <el-tag
+              v-if="scope.row.status == 0"
+              type="warning"
               effect="dark"
               closable
-              @close="handleClose('has',1)"
+              @close="handleClose(scope.row.create_time, 'status', 1)"
+              >未完成</el-tag
             >
-              {{ scope.row.status ? "已完成" : "未完成" }}
-            </el-tag>
-            <el-tag v-if="scope.row.has==0"
-              type='warning'
+            <el-tag
+              v-if="scope.row.has == 0 && scope.row.status != 3"
+              type="warning"
               effect="dark"
               closable
-              @close="handleClose('status',1)"
+              @close="handleClose(scope.row.create_time, 'has', 1)"
+              >未付款</el-tag
             >
-              {{ scope.row.status ? "已付款" : "未付款" }}
-            </el-tag>
-              <!-- <el-tag
-              :type="scope.row.status==3? 'info' : 'danger'"
-              effect="dark"
-              @click="handleClose('status',3)"
+            <el-button
+            v-if="scope.row.status!=1"
+              type="danger"
+              size="small"
+              :disabled="scope.row.status == 3"
+              @click="handleClose(scope.row.create_time, 'status', 3)"
             >
-              {{ scope.row.status ? "订单已取消" : "取消订单" }}
-            </el-tag> -->
-            <el-button  type="danger" size="small" :disabled="scope.row.status==3" @click="handleClose('status',3)"> {{scope.row.status?'订单已取消':'取消订单'}}</el-button>
+              {{ scope.row.status == 3 ? "订单已取消" : "取消订单" }}</el-button
+            >
           </template>
         </el-table-column>
       </el-table>
-         <!-- 分页区域 -->
+      <!-- 分页区域 -->
       <el-pagination
-      background
+        background
         @current-change="handleCurrentChange"
         :current-page="queryInfo.pageNum"
         :page-size="queryInfo.pageSize"
@@ -122,7 +133,6 @@
         <el-button type="primary" @click="addUser">确 定</el-button>
       </span>
     </el-dialog>
-
   </div>
 </template>
 <script>
@@ -132,7 +142,7 @@ export default {
       queryInfo: {
         query: '',
         pageNum: 1,
-        pageSize: 10
+        pageSize: 5
       },
       userList: [],
       total: 0,
@@ -189,23 +199,41 @@ export default {
       this.total = res.data.total
       this.loading = false
     },
-    handleClose (type, s) {
-      this.$confirm('此操作将永久删除该文件, 是否继续?', '提示', {
+    handleClose (createTime, type, s) {
+      this.$confirm('确认操作, 是否继续?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning',
         center: true
-      }).then(() => {
-        this.$message({
-          type: 'success',
-          message: '删除成功!'
-        })
-      }).catch(() => {
-        this.$message({
-          type: 'info',
-          message: '已取消删除'
-        })
       })
+        .then(async () => {
+          const { data: res } = await this.$http.put(
+            'update/',
+            {
+              createtime: createTime,
+              type,
+              s
+            }
+          )
+          if (res.data > 0) {
+            this.$message({
+              type: 'success',
+              message: '修改成功!'
+            })
+            this.getUserList()
+          } else {
+            this.$message({
+              type: 'error',
+              message: '修改失败'
+            })
+          }
+        })
+        .catch(() => {
+          this.$message({
+            type: 'info',
+            message: '已取消'
+          })
+        })
     },
     handleCurrentChange (newSize) {
       this.queryInfo.pageNum = newSize
@@ -213,10 +241,10 @@ export default {
     },
     async addUser () {
       const { data: res } = await this.$http.post('add', this.Form)
-      if (res.meta.status !== 200) {
-        this.$message.error('添加用户失败！')
+      if (res.code !== 200) {
+        this.$message.error('添加失败！')
       }
-      this.$message.success('添加用户成功！')
+      this.$message.success('添加成功！')
       // 隐藏添加用户对话框
       this.addDialogVisible = false
       this.getUserList()
@@ -225,11 +253,10 @@ export default {
 }
 </script>
 <style lang="less" scoped>
-.el-tag
-{
+.el-tag {
   margin-left: 10px;
 }
-.el-button{
+.el-button {
   margin-left: 10px;
 }
 </style>
